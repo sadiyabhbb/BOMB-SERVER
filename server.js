@@ -28,9 +28,9 @@ app.post('/call-api', async (req, res) => {
         const apiUrl = apiTemplate.replace('{phone}', params.phone);
         try {
             const response = await axios.post(apiUrl, { phone: params.phone }, {
-                headers: { 'Content-Type': 'application/json' } // optional, depends on API
+                headers: { 'Content-Type': 'application/json' }
             });
-            results.push(response.data);
+            results.push(response.data); // e.g., { "otp_length": 6 }
         } catch (err) {
             results.push({ error: err.message });
         }
@@ -54,7 +54,7 @@ app.get('/call-api', async (req, res) => {
             const response = await axios.post(apiUrl, { phone }, {
                 headers: { 'Content-Type': 'application/json' }
             });
-            results.push(response.data);
+            results.push(response.data); // e.g., { "otp_length": 6 }
         } catch (err) {
             results.push({ error: err.message });
         }
