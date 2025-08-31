@@ -9,32 +9,36 @@ app.use(express.json());
 // Load APIs
 const apis = JSON.parse(fs.readFileSync("apis.json"));
 
+// Utility function to get headers based on API
+function getHeaders(apiName) {
+  if (apiName.includes("MIMSMS")) {
+    return { "User-Agent": "Mozilla/5.0", "Referer": "https://billing.mimsms.com/" };
+  } else {
+    return { "User-Agent": "Mozilla/5.0", "Referer": "https://bikroy.com/" };
+  }
+}
+
 // POST route (bot use)
 app.post("/call-api", async (req, res) => {
-  const { apiName, params } = req.body;
-  const apiTemplate = apis[apiName];
-  if (!apiTemplate) return res.status(400).send("API not found");
-
+  const { params } = req.body;
+  const phone = params.phone;
   const total = parseInt(params.count) || 1;
+
   let results = [];
 
-  for (let i = 0; i < total; i++) {
-    const apiUrl = apiTemplate.replace("{phone}", params.phone);
-    try {
-      // Use GET instead of POST for Bikroy API
-      const response = await axios.get(apiUrl, {
-        headers: {
-          "User-Agent": "Mozilla/5.0",
-          "Referer": "https://bikroy.com/"
-        }
-      });
-      results.push(response.data);
-    } catch (err) {
-      results.push(
-        err.response
-          ? { status: err.response.status, data: err.response.data }
-          : { error: err.message }
-      );
+  // Loop over all APIs in apis.json
+  for (const [apiName, apiTemplate] of Object.entries(apis)) {
+    for (let i = 0; i < total; i++) {
+      const apiUrl = apiTemplate.replace(/{phone}/g, phone);
+      try {
+        const response = await axios.get(apiUrl, { headers: getHeaders(apiName) });
+        results.push({ api: apiName, data: response.data });
+      } catch (err) {
+        results.push({
+          api: apiName,
+          error: err.response ? err.response.data : err.message
+        });
+      }
     }
   }
 
@@ -44,28 +48,22 @@ app.post("/call-api", async (req, res) => {
 // GET route (browser test)
 app.get("/call-api", async (req, res) => {
   const { phone, count } = req.query;
-  const apiTemplate = apis["SMS_API"];
-  if (!apiTemplate) return res.status(400).send("API not found");
-
   const total = parseInt(count) || 1;
+
   let results = [];
 
-  for (let i = 0; i < total; i++) {
-    const apiUrl = apiTemplate.replace("{phone}", phone);
-    try {
-      const response = await axios.get(apiUrl, {
-        headers: {
-          "User-Agent": "Mozilla/5.0",
-          "Referer": "https://bikroy.com/"
-        }
-      });
-      results.push(response.data);
-    } catch (err) {
-      results.push(
-        err.response
-          ? { status: err.response.status, data: err.response.data }
-          : { error: err.message }
-      );
+  for (const [apiName, apiTemplate] of Object.entries(apis)) {
+    for (let i = 0; i < total; i++) {
+      const apiUrl = apiTemplate.replace(/{phone}/g, phone);
+      try {
+        const response = await axios.get(apiUrl, { headers: getHeaders(apiName) });
+        results.push({ api: apiName, data: response.data });
+      } catch (err) {
+        results.push({
+          api: apiName,
+          error: err.response ? err.response.data : err.message
+        });
+      }
     }
   }
 
