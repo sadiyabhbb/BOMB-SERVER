@@ -1,4 +1,3 @@
 {
-    "SMS_API": "https://bikroy.com/data/phone_number_login/verifications/phone_login?phone={phone}",
-    "API_2": "https://example.com/api2?param={param}"
+  "SMS_API": "https://bikroy.com/data/phone_number_login/verifications/phone_login?phone={phone}"
 }
