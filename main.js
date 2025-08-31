@@ -18,6 +18,13 @@ function getHeaders(apiName) {
   }
 }
 
+// Utility function to encode phone for MiMSMS
+function encodePhoneForMiMSMS(phone) {
+  const phonenumber = encodeURIComponent("+880" + phone); // e.g., +8801761838316
+  const icphone = encodeURIComponent("+880 " + phone.slice(0, 4) + "-" + phone.slice(4));
+  return { phonenumber, icphone };
+}
+
 // POST route (bot use)
 app.post("/call-api", async (req, res) => {
   const { params } = req.body;
@@ -26,10 +33,20 @@ app.post("/call-api", async (req, res) => {
 
   let results = [];
 
-  // Loop over all APIs in apis.json
   for (const [apiName, apiTemplate] of Object.entries(apis)) {
     for (let i = 0; i < total; i++) {
-      const apiUrl = apiTemplate.replace(/{phone}/g, phone);
+      let apiUrl = apiTemplate;
+
+      // Special handling for MiMSMS API
+      if (apiName.includes("MIMSMS")) {
+        const { phonenumber, icphone } = encodePhoneForMiMSMS(phone);
+        apiUrl = apiUrl
+          .replace("{phone}", phonenumber)
+          .replace("{icphone}", icphone);
+      } else {
+        apiUrl = apiUrl.replace(/{phone}/g, phone);
+      }
+
       try {
         const response = await axios.get(apiUrl, { headers: getHeaders(apiName) });
         results.push({ api: apiName, data: response.data });
@@ -54,7 +71,18 @@ app.get("/call-api", async (req, res) => {
 
   for (const [apiName, apiTemplate] of Object.entries(apis)) {
     for (let i = 0; i < total; i++) {
-      const apiUrl = apiTemplate.replace(/{phone}/g, phone);
+      let apiUrl = apiTemplate;
+
+      // Special handling for MiMSMS API
+      if (apiName.includes("MIMSMS")) {
+        const { phonenumber, icphone } = encodePhoneForMiMSMS(phone);
+        apiUrl = apiUrl
+          .replace("{phone}", phonenumber)
+          .replace("{icphone}", icphone);
+      } else {
+        apiUrl = apiUrl.replace(/{phone}/g, phone);
+      }
+
       try {
         const response = await axios.get(apiUrl, { headers: getHeaders(apiName) });
         results.push({ api: apiName, data: response.data });
