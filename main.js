@@ -9,7 +9,7 @@ app.use(express.json());
 // Load APIs
 const apis = JSON.parse(fs.readFileSync("apis.json"));
 
-// Utility function to get headers based on API
+// Headers based on API
 function getHeaders(apiName) {
   if (apiName.includes("MIMSMS")) {
     return { "User-Agent": "Mozilla/5.0", "Referer": "https://billing.mimsms.com/" };
@@ -18,10 +18,10 @@ function getHeaders(apiName) {
   }
 }
 
-// Utility function to encode phone for MiMSMS
+// Encode phone for MiMSMS
 function encodePhoneForMiMSMS(phone) {
-  const phonenumber = encodeURIComponent("+880" + phone); // e.g., +8801761838316
-  const icphone = encodeURIComponent("+880 " + phone.slice(0, 4) + "-" + phone.slice(4));
+  const phonenumber = encodeURIComponent("+880" + phone); // +8801761838316
+  const icphone = encodeURIComponent("+880 " + phone.slice(0, 4) + "-" + phone.slice(4)); // +880 1761-838316
   return { phonenumber, icphone };
 }
 
@@ -33,11 +33,12 @@ app.post("/call-api", async (req, res) => {
 
   let results = [];
 
+  // Loop over all APIs
   for (const [apiName, apiTemplate] of Object.entries(apis)) {
     for (let i = 0; i < total; i++) {
       let apiUrl = apiTemplate;
 
-      // Special handling for MiMSMS API
+      // Handle MiMSMS phone encoding
       if (apiName.includes("MIMSMS")) {
         const { phonenumber, icphone } = encodePhoneForMiMSMS(phone);
         apiUrl = apiUrl
@@ -73,7 +74,7 @@ app.get("/call-api", async (req, res) => {
     for (let i = 0; i < total; i++) {
       let apiUrl = apiTemplate;
 
-      // Special handling for MiMSMS API
+      // Handle MiMSMS phone encoding
       if (apiName.includes("MIMSMS")) {
         const { phonenumber, icphone } = encodePhoneForMiMSMS(phone);
         apiUrl = apiUrl
