@@ -1,5 +1,5 @@
 {
   "1. SMS_API_BIKROY": "https://bikroy.com/data/phone_number_login/verifications/phone_login?phone={phone}",
 
-  "2. SMS_API_MIMSMS": "https://billing.mimsms.com/index.php?m=smsmanager&action=request&request_type=call&guest=1&phonenumber={phone}&country=bd&countrycode=880&icphone={icphone}"
+  "2. SMS_API_MIMSMS": "https://billing.mimsms.com/index.php?m=smsmanager&action=request&request_type=call&guest=1&phonenumber=+88{phone}&country=bd&countrycode=880&icphone=+88{phone}"
 }
