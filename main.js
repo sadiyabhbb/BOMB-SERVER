@@ -9,54 +9,39 @@ app.use(express.json());
 // Load APIs
 const apis = JSON.parse(fs.readFileSync("apis.json"));
 
-// Headers based on API
-function getHeaders(apiName) {
-  if (apiName.includes("MIMSMS")) {
-    return { "User-Agent": "Mozilla/5.0", "Referer": "https://billing.mimsms.com/" };
-  } else {
-    return { "User-Agent": "Mozilla/5.0", "Referer": "https://bikroy.com/" };
+// Universal function to call API with browser-like headers
+async function callApi(apiUrl) {
+  try {
+    const response = await axios.get(apiUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        "Referer": "https://billing.mimsms.com/",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+      }
+    });
+    return response.data;
+  } catch (err) {
+    return err.response
+      ? { status: err.response.status, data: err.response.data }
+      : { error: err.message };
   }
-}
-
-// Encode phone for MiMSMS
-function encodePhoneForMiMSMS(phone) {
-  const phonenumber = encodeURIComponent("+880" + phone); // +8801761838316
-  const icphone = encodeURIComponent("+880 " + phone.slice(0, 4) + "-" + phone.slice(4)); // +880 1761-838316
-  return { phonenumber, icphone };
 }
 
 // POST route (bot use)
 app.post("/call-api", async (req, res) => {
-  const { params } = req.body;
-  const phone = params.phone;
-  const total = parseInt(params.count) || 1;
+  const { phone, count } = req.body;
+  if (!phone) return res.status(400).send("Phone number required");
 
+  const total = parseInt(count) || 1;
   let results = [];
 
-  // Loop over all APIs
-  for (const [apiName, apiTemplate] of Object.entries(apis)) {
+  for (let apiName in apis) {
+    const apiTemplate = apis[apiName];
+
     for (let i = 0; i < total; i++) {
-      let apiUrl = apiTemplate;
-
-      // Handle MiMSMS phone encoding
-      if (apiName.includes("MIMSMS")) {
-        const { phonenumber, icphone } = encodePhoneForMiMSMS(phone);
-        apiUrl = apiUrl
-          .replace("{phone}", phonenumber)
-          .replace("{icphone}", icphone);
-      } else {
-        apiUrl = apiUrl.replace(/{phone}/g, phone);
-      }
-
-      try {
-        const response = await axios.get(apiUrl, { headers: getHeaders(apiName) });
-        results.push({ api: apiName, data: response.data });
-      } catch (err) {
-        results.push({
-          api: apiName,
-          error: err.response ? err.response.data : err.message
-        });
-      }
+      const apiUrl = apiTemplate.replace(/{phone}/g, phone);
+      const data = await callApi(apiUrl);
+      results.push({ api: apiName, data });
     }
   }
 
@@ -66,33 +51,18 @@ app.post("/call-api", async (req, res) => {
 // GET route (browser test)
 app.get("/call-api", async (req, res) => {
   const { phone, count } = req.query;
-  const total = parseInt(count) || 1;
+  if (!phone) return res.status(400).send("Phone number required");
 
+  const total = parseInt(count) || 1;
   let results = [];
 
-  for (const [apiName, apiTemplate] of Object.entries(apis)) {
+  for (let apiName in apis) {
+    const apiTemplate = apis[apiName];
+
     for (let i = 0; i < total; i++) {
-      let apiUrl = apiTemplate;
-
-      // Handle MiMSMS phone encoding
-      if (apiName.includes("MIMSMS")) {
-        const { phonenumber, icphone } = encodePhoneForMiMSMS(phone);
-        apiUrl = apiUrl
-          .replace("{phone}", phonenumber)
-          .replace("{icphone}", icphone);
-      } else {
-        apiUrl = apiUrl.replace(/{phone}/g, phone);
-      }
-
-      try {
-        const response = await axios.get(apiUrl, { headers: getHeaders(apiName) });
-        results.push({ api: apiName, data: response.data });
-      } catch (err) {
-        results.push({
-          api: apiName,
-          error: err.response ? err.response.data : err.message
-        });
-      }
+      const apiUrl = apiTemplate.replace(/{phone}/g, phone);
+      const data = await callApi(apiUrl);
+      results.push({ api: apiName, data });
     }
   }
 
