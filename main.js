@@ -9,39 +9,42 @@ app.use(express.json());
 // Load APIs
 const apis = JSON.parse(fs.readFileSync("apis.json"));
 
-// Universal function to call API with browser-like headers
-async function callApi(apiUrl) {
-  try {
-    const response = await axios.get(apiUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-        "Referer": "https://billing.mimsms.com/",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-      }
-    });
-    return response.data;
-  } catch (err) {
-    return err.response
-      ? { status: err.response.status, data: err.response.data }
-      : { error: err.message };
-  }
-}
-
 // POST route (bot use)
 app.post("/call-api", async (req, res) => {
-  const { phone, count } = req.body;
-  if (!phone) return res.status(400).send("Phone number required");
-
-  const total = parseInt(count) || 1;
+  const { params } = req.body;
+  const total = parseInt(params.count) || 1;
   let results = [];
 
-  for (let apiName in apis) {
-    const apiTemplate = apis[apiName];
-
+  for (const [apiName, apiConfig] of Object.entries(apis)) {
     for (let i = 0; i < total; i++) {
-      const apiUrl = apiTemplate.replace(/{phone}/g, phone);
-      const data = await callApi(apiUrl);
-      results.push({ api: apiName, data });
+      try {
+        let response;
+
+        if (apiConfig.method === "GET") {
+          const apiUrl = apiConfig.url.replace(/\{phone\}/g, params.phone);
+          response = await axios.get(apiUrl, {
+            headers: { "User-Agent": "Mozilla/5.0" }
+          });
+        } else if (apiConfig.method === "POST") {
+          response = await axios.post(
+            apiConfig.url,
+            { phone: params.phone },
+            {
+              headers: {
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0"
+              }
+            }
+          );
+        }
+
+        results.push({ api: apiName, data: response.data });
+      } catch (err) {
+        results.push({
+          api: apiName,
+          error: err.response?.data || err.message
+        });
+      }
     }
   }
 
@@ -51,18 +54,39 @@ app.post("/call-api", async (req, res) => {
 // GET route (browser test)
 app.get("/call-api", async (req, res) => {
   const { phone, count } = req.query;
-  if (!phone) return res.status(400).send("Phone number required");
-
   const total = parseInt(count) || 1;
   let results = [];
 
-  for (let apiName in apis) {
-    const apiTemplate = apis[apiName];
-
+  for (const [apiName, apiConfig] of Object.entries(apis)) {
     for (let i = 0; i < total; i++) {
-      const apiUrl = apiTemplate.replace(/{phone}/g, phone);
-      const data = await callApi(apiUrl);
-      results.push({ api: apiName, data });
+      try {
+        let response;
+
+        if (apiConfig.method === "GET") {
+          const apiUrl = apiConfig.url.replace(/\{phone\}/g, phone);
+          response = await axios.get(apiUrl, {
+            headers: { "User-Agent": "Mozilla/5.0" }
+          });
+        } else if (apiConfig.method === "POST") {
+          response = await axios.post(
+            apiConfig.url,
+            { phone },
+            {
+              headers: {
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0"
+              }
+            }
+          );
+        }
+
+        results.push({ api: apiName, data: response.data });
+      } catch (err) {
+        results.push({
+          api: apiName,
+          error: err.response?.data || err.message
+        });
+      }
     }
   }
 
