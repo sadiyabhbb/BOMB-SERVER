@@ -7,10 +7,5 @@
   "2. SMS_API_MIMSMS": {
     "url": "https://billing.mimsms.com/index.php?m=smsmanager&action=request&request_type=call&guest=1&phonenumber=%2B{phone}&country=bd&countrycode=880&icphone=%2B880{phone}",
     "method": "GET"
-  },
-
-  "3. SMS_API_QUIZGIRI": {
-    "url": "https://developer.quizgiri.xyz/api/v2.0/send-otp",
-    "method": "POST"
   }
 }
