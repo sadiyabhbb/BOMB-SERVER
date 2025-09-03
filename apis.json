@@ -1,5 +1,16 @@
 {
-  "1. SMS_API_BIKROY": "https://bikroy.com/data/phone_number_login/verifications/phone_login?phone={phone}",
+  "1. SMS_API_BIKROY": {
+    "url": "https://bikroy.com/data/phone_number_login/verifications/phone_login?phone={phone}",
+    "method": "GET"
+  },
 
-  "2. SMS_API_MIMSMS": "https://billing.mimsms.com/index.php?m=smsmanager&action=request&request_type=call&guest=1&phonenumber=+88{phone}&country=bd&countrycode=880&icphone=+88{phone}"
+  "2. SMS_API_MIMSMS": {
+    "url": "https://billing.mimsms.com/index.php?m=smsmanager&action=request&request_type=call&guest=1&phonenumber=%2B{phone}&country=bd&countrycode=880&icphone=%2B880{phone}",
+    "method": "GET"
+  },
+
+  "3. SMS_API_QUIZGIRI": {
+    "url": "https://developer.quizgiri.xyz/api/v2.0/send-otp",
+    "method": "POST"
+  }
 }
